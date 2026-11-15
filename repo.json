@@ -3,7 +3,7 @@
     "Author": "Der Ätherfluss",
     "Name": "Aetherfluss Nexus",
     "InternalName": "AetherflussGuide",
-    "AssemblyVersion": "0.12.4.0",
+    "AssemblyVersion": "0.12.5.0",
     "Description": "FFXIV-Guides, EasyMedia-Videovorschauen sowie optionale Connect-Kontakte und Nachrichten.",
     "ApplicableVersion": "any",
     "Tags": [
@@ -23,9 +23,9 @@
     "IsHide": false,
     "IsTestingExclusive": false,
     "TestingAssemblyVersion": null,
-    "DownloadLinkInstall": "https://github.com/DarkDino2010/-therfluss-Nexus/releases/download/v0.12.4-beta/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/DarkDino2010/-therfluss-Nexus/releases/download/v0.12.4-beta/latest.zip",
-    "DownloadLinkTesting": "https://github.com/DarkDino2010/-therfluss-Nexus/releases/download/v0.12.4-beta/latest.zip",
-    "LastUpdate": 1794755307
+    "DownloadLinkInstall": "https://github.com/DarkDino2010/-therfluss-Nexus/releases/download/v0.12.5-beta/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/DarkDino2010/-therfluss-Nexus/releases/download/v0.12.5-beta/latest.zip",
+    "DownloadLinkTesting": "https://github.com/DarkDino2010/-therfluss-Nexus/releases/download/v0.12.5-beta/latest.zip",
+    "LastUpdate": 1794762763
   }
 ]
