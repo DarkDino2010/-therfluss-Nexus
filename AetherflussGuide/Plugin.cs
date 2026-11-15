@@ -1264,7 +1264,12 @@ public sealed partial class Plugin : IDalamudPlugin
 
     private void DrawSocial()
     {
-        DrawSocialExtras();
+        ImGui.Spacing();
+        ImGui.TextColored(GuideBlue, "ÄTHERFLUSS CONNECT");
+        ImGui.TextDisabled("Nachrichten, Kontakte und Community in einem Bereich");
+        if (!ImGui.BeginTabBar("##connect-workspace")) return;
+        if (ImGui.BeginTabItem("Nachrichten"))
+        {
         ImGui.TextWrapped("/pn Vorname Nachname@Welt Nachricht – auch während Instanzen, weltübergreifend.");
         if (!string.IsNullOrEmpty(pnStatus)) ImGui.TextWrapped(pnStatus);
         if (ImGui.SmallButton("Neue PN (/pn)"))
@@ -1294,6 +1299,42 @@ public sealed partial class Plugin : IDalamudPlugin
                 ImGui.PopID();
             }
         }
+        if (chatPartnerId <= 0)
+        {
+            ImGui.Spacing();
+            ImGui.TextDisabled("Wähle im Tab Kontakte einen Freund und klicke auf Chat öffnen.");
+            return;
+        }
+        ImGui.Separator();
+        ImGui.TextUnformatted("Nachrichten: " + chatPartnerName);
+        ImGui.SameLine();
+        if (ImGui.SmallButton("Aktualisieren") && !busy)
+            _ = SocialOperationAsync("messages&userId=" + chatPartnerId, HttpMethod.Get);
+        if (ImGui.BeginChild("connect-chat", new Vector2(0, 300), true))
+        {
+            foreach (var item in chats)
+                {
+                    var author = item.SenderId == registeredUserId ? "Ich" : chatPartnerName;
+                    var time = string.IsNullOrWhiteSpace(item.CreatedAt) ? "" : " · " + item.CreatedAt;
+                    ImGui.TextColored(item.SenderId == registeredUserId ? GuideBlue : GuideMuted, author + time);
+                    ImGui.TextWrapped(item.Body);
+                    ImGui.Spacing();
+                }
+        }
+        ImGui.EndChild();
+        DrawChatTranslations(chats);
+        ImGui.SetNextItemWidth(-95);
+        ImGui.InputText("##message", ref chatDraft, 1500);
+        ImGui.SameLine();
+        if (ImGui.Button("Senden") && !busy && !string.IsNullOrWhiteSpace(chatDraft))
+        {
+            var msg = chatDraft.Trim();
+            _ = SocialOperationAsync("message_send", HttpMethod.Post, new { userId = chatPartnerId, body = msg });
+        }
+            ImGui.EndTabItem();
+        }
+        if (ImGui.BeginTabItem("Kontakte"))
+        {
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Kontakte aus anderen Welten", ImGuiTreeNodeFlags.DefaultOpen))
             DrawDirectory();
@@ -1404,27 +1445,15 @@ public sealed partial class Plugin : IDalamudPlugin
                 _ = SocialOperationAsync("block", HttpMethod.Post, new { userId = item.OtherUserId });
             ImGui.PopID();
         }
-        if (chatPartnerId <= 0) return;
-        ImGui.Separator();
-        ImGui.TextUnformatted("Nachrichten: " + chatPartnerName);
-        ImGui.SameLine();
-        if (ImGui.SmallButton("Aktualisieren") && !busy)
-            _ = SocialOperationAsync("messages&userId=" + chatPartnerId, HttpMethod.Get);
-        if (ImGui.BeginChild("connect-chat", new Vector2(0, 130), true))
-        {
-            foreach (var item in chats)
-                ImGui.TextWrapped((item.SenderId == registeredUserId ? "Ich: " : chatPartnerName + ": ") + item.Body);
+
+            ImGui.EndTabItem();
         }
-        ImGui.EndChild();
-        DrawChatTranslations(chats);
-        ImGui.SetNextItemWidth(-95);
-        ImGui.InputText("##message", ref chatDraft, 1500);
-        ImGui.SameLine();
-        if (ImGui.Button("Senden") && !busy && !string.IsNullOrWhiteSpace(chatDraft))
+        if (ImGui.BeginTabItem("Community & Termine"))
         {
-            var msg = chatDraft.Trim();
-            _ = SocialOperationAsync("message_send", HttpMethod.Post, new { userId = chatPartnerId, body = msg });
+            DrawSocialExtras();
+            ImGui.EndTabItem();
         }
+        ImGui.EndTabBar();
     }
 
     public sealed class FriendItem
