@@ -1,1 +1,31 @@
-[]
+[
+  {
+    "Author": "Der Ätherfluss",
+    "Name": "Aetherfluss Nexus",
+    "InternalName": "AetherflussGuide",
+    "AssemblyVersion": "0.12.4.0",
+    "Description": "FFXIV-Guides, EasyMedia-Videovorschauen sowie optionale Connect-Kontakte und Nachrichten.",
+    "ApplicableVersion": "any",
+    "Tags": [
+      "guide",
+      "raid",
+      "dungeon",
+      "deutsch"
+    ],
+    "DalamudApiLevel": 15,
+    "LoadRequiredState": 0,
+    "LoadSync": false,
+    "CanUnloadAsync": false,
+    "LoadPriority": 0,
+    "Punchline": "Guides, Videos und Connect direkt im Spiel.",
+    "AcceptsFeedback": true,
+    "RepoUrl": "https://github.com/DarkDino2010/-therfluss-Nexus",
+    "IsHide": false,
+    "IsTestingExclusive": false,
+    "TestingAssemblyVersion": null,
+    "DownloadLinkInstall": "https://github.com/DarkDino2010/-therfluss-Nexus/releases/download/v0.12.4-beta/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/DarkDino2010/-therfluss-Nexus/releases/download/v0.12.4-beta/latest.zip",
+    "DownloadLinkTesting": "https://github.com/DarkDino2010/-therfluss-Nexus/releases/download/v0.12.4-beta/latest.zip",
+    "LastUpdate": 1794755307
+  }
+]
