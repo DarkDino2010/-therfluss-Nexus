@@ -19,3 +19,20 @@
 
 ## Warum noch keine fertige Konto-Löschung?
 Der Client alleine kann niemals garantieren, dass Daten in MySQL gelöscht wurden. Die produktive API und Tabellenbeziehungen müssen zuerst aus der **aktuellen Serverversion** geprüft werden. Die Kontolöschung darf nicht durch einen nur kosmetischen Button dargestellt werden.
+
+
+## Umsetzungsstand des Client-Patches (15.11.2026)
+
+- **Client auf `main` kompiliert:** GitHub CI-Lauf [#5](https://github.com/DarkDino2010/-therfluss-Nexus/actions/runs/43735430429) erfolgreich. Nachrichtenhistorie unterstützt jetzt Nachladen über `beforeId` und `hasMore` (wenn der Server dies liefert).
+- **Konto-Tab:** Ein einziges Feld für das neue Passwort; Kontolöschung mit einer Passworteingabe und ohne zusätzlichen Popup-Dialog. **Schaltfläche ist standardmäßig gesperrt** und wird erst nach `GET connect.php?action=health` mit `accountDeletionAvailable: true` freigeschaltet.
+- **Backend-Patch als separates Integrationspaket erzeugt:** Aus der letzten im Gespräch vorhandenen **V0.12.4-Servervorlage**. Enthält `delete_account` mit Authentifizierung, Passwortprüfung, FK-Prüfung und SQL-Transaktion sowie die Cursor-Paginierung. PHP-Syntaxprüfung erfolgreich.
+- **Kein Produktiv-Deployment erfolgt:** Die tatsächliche laufende `connect.php` und das vollständige aktuelle Datenbankschema sind noch nicht verifiziert. Alte ZIP-Backend-Dateien nicht unbesehen einspielen.
+- **Vollständige Kontolöschung noch nicht produktiv nachgewiesen.** Es fehlen Tests auf einer Kopie der wirklichen Datenbank und die Klärung von Backup-Fristen.
+- **Passwort-Wiederherstellung ohne gültige Sitzung:** weiterhin offen; benötigt eine authentifizierte Recovery-Methode.
+
+### Abnahme vor Aktivierung
+
+1. Aktuelle produktive API und `SHOW CREATE TABLE` sämtlicher `aether_connect_*`-Tabellen abgleichen.
+2. Vor Löschtests isolierte Testdatenbank mit anonymisierten Referenzdatensätzen aufbauen.
+3. Erfolgs-/Fehlerfälle samt fremden Benutzerkonten, Nachrichten, Einladungen, Räumen, Raid-Termine, Sitzungstokens, Kontaktmetadaten prüfen.
+4. Erst danach Server-Patch in die produktive API übernehmen und das Client-Feature freischalten.
