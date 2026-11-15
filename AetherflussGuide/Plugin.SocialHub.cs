@@ -31,7 +31,6 @@ public sealed partial class Plugin
     private long raidInviteeId;
     private readonly List<RaidEventItem> raidEvents = [];
     private long guideShareRecipientId;
-    private string guideShareUrl = "";
     private readonly Dictionary<long, string> translatedMessages = new();
     private bool translationBusy;
     private bool translationConsent;
