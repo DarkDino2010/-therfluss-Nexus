@@ -40,3 +40,20 @@ jobs:
       - name: Compile plugin
         shell: pwsh
         run: dotnet build AetherflussGuide/AetherflussGuide.csproj --configuration Release -p:Platform=x64 --nologo
+      - name: Prepare CI test package
+        shell: pwsh
+        run: |
+          $package = Get-ChildItem -Path 'AetherflussGuide/bin' -Recurse -Filter latest.zip -File |
+            Where-Object { $_.FullName -match '[\\/]Release[\\/]' } |
+            Select-Object -First 1
+          if (-not $package) { throw 'Dalamud SDK did not generate a latest.zip package' }
+          New-Item -ItemType Directory -Path 'Preview-Output' -Force | Out-Null
+          Copy-Item $package.FullName 'Preview-Output/latest.zip'
+          Write-Host "CI package: $($package.FullName)"
+      - name: Upload test package (not published to plugin feed)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aetherfluss-Nexus-v0.12.5-CI
+          path: Preview-Output/latest.zip
+          if-no-files-found: error
+          retention-days: 7
