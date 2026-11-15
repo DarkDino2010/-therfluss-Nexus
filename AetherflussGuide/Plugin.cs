@@ -845,17 +845,7 @@ public sealed partial class Plugin : IDalamudPlugin
             if (!string.Equals(character, registeredName, StringComparison.OrdinalIgnoreCase) ||
                 !string.Equals(home, registeredHome, StringComparison.OrdinalIgnoreCase))
                 ImGui.TextWrapped("Achtung: Angemeldeter Charakter weicht vom Connect-Profil ab. Keine Chatfunktionen für diesen Charakter aktivieren.");
-            if (ImGui.Button("Profil aktualisieren") && !busy) _ = LoadConnectProfileAsync();
-            ImGui.SameLine();
-            if (ImGui.Button("Connect abmelden") && !busy) _ = LogoutConnectAsync();
-            if (ImGui.CollapsingHeader("Connect-Passwort einrichten / ändern"))
-            {
-                ImGui.TextDisabled("Bestehende Konten: aktuelles Passwort beim ersten Einrichten leer lassen.");
-                ImGui.InputText("Bisheriges Passwort##old", ref currentPassword, 128, ImGuiInputTextFlags.Password);
-                ImGui.InputText("Neues Passwort##new", ref newPassword, 128, ImGuiInputTextFlags.Password);
-                if (!busy && newPassword.Length >= 12 && ImGui.Button("Passwort speichern"))
-                    _ = SetConnectPasswordAsync(currentPassword, newPassword);
-            }
+            ImGui.TextDisabled("Kontoverwaltung und Passwort findest du im Tab Konto & Sicherheit.");
         }
         else
         {
@@ -1423,7 +1413,46 @@ public sealed partial class Plugin : IDalamudPlugin
             DrawSocialExtras();
             ImGui.EndTabItem();
         }
+        if (ImGui.BeginTabItem("Konto & Sicherheit"))
+        {
+            DrawConnectAccount();
+            ImGui.EndTabItem();
+        }
         ImGui.EndTabBar();
+    }
+
+    private void DrawConnectAccount()
+    {
+        ImGui.Spacing();
+        ImGui.TextColored(GuideBlue, "KONTO & SICHERHEIT");
+        ImGui.TextUnformatted("Verbundenes Profil: " + registeredCharacter + "@" + registeredWorld);
+        ImGui.Spacing();
+
+        bool busy;
+        lock (gate) busy = connectBusy;
+        if (ImGui.Button("Profil aktualisieren") && !busy) _ = LoadConnectProfileAsync();
+        ImGui.SameLine();
+        if (ImGui.Button("Connect abmelden") && !busy) _ = LogoutConnectAsync();
+
+        ImGui.Separator();
+        ImGui.TextColored(GuideBlue, "Connect-Passwort");
+        ImGui.TextWrapped("Neues Passwort einmal eingeben. Eine zweite Eingabe zur Bestätigung ist nicht erforderlich.");
+        ImGui.InputText("Neues Passwort##new", ref newPassword, 128, ImGuiInputTextFlags.Password);
+        if (ImGui.CollapsingHeader("Bestehendes Passwort zur Sicherheitsprüfung"))
+        {
+            ImGui.TextDisabled("Bei einem vorhandenen Passwort kann der Server das bisherige Passwort verlangen.");
+            ImGui.InputText("Bisheriges Passwort##old", ref currentPassword, 128, ImGuiInputTextFlags.Password);
+        }
+        if (!busy && newPassword.Length >= 12 && ImGui.Button("Passwort speichern"))
+            _ = SetConnectPasswordAsync(currentPassword, newPassword);
+        ImGui.TextDisabled("Eine Anmeldung allein ersetzt keine serverseitige Passwort-Wiederherstellung.");
+
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.TextColored(new Vector4(1f, .49f, .49f, 1f), "KONTO DAUERHAFT LÖSCHEN");
+        ImGui.TextWrapped("Die vollständige Kontolöschung wird erst angeboten, wenn der Server dafür einen abgesicherten Endpunkt bereitstellt.");
+        ImGui.TextDisabled("Dazu gehören Sitzungen, Freunde, Nachrichten, Kontakte und Termine.");
+        ImGui.TextDisabled("Eine lokale Abmeldung löscht keine Serverdaten.");
     }
 
     private void DrawConversationPicker()
