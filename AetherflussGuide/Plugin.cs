@@ -794,6 +794,17 @@ public sealed partial class Plugin : IDalamudPlugin
                 unreadMessages.Clear();
                 alertedMessageIds.Clear();
                 pendingChatNotices.Clear();
+                friendItems.Clear();
+                foundUsers.Clear();
+                chatItems.Clear();
+                worldUsers.Clear();
+                chatPartnerId = 0;
+                chatPartnerName = "";
+                chatDraft = "";
+                loginPassword = "";
+                registrationPassword = "";
+                newPassword = "";
+                currentPassword = "";
                 directorySettingsLoaded = false;
                 connectBusy = false;
             }
