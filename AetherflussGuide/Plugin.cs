@@ -53,6 +53,9 @@ public sealed partial class Plugin : IDalamudPlugin
     private string loginPassword = "";
     private string newPassword = "";
     private string currentPassword = "";
+    private string deleteAccountPassword = "";
+    private bool accountDeletionAvailable;
+    private bool chatHasMore;
     private bool showSignup;
     private string connectStatus = "Noch nicht mit dem Connect-Server verbunden.";
     private string? accessToken;
@@ -662,7 +665,13 @@ public sealed partial class Plugin : IDalamudPlugin
             var response = await ConnectRequestAsync("health", HttpMethod.Get);
             using var doc = JsonDocument.Parse(response.Json);
             string db = doc.RootElement.GetProperty("database").GetString() ?? "unbekannt";
-            lock (gate) connectStatus = "Connect API: " + db;
+            bool deleteAvailable = doc.RootElement.TryGetProperty("accountDeletionAvailable", out var flag)
+                && flag.ValueKind == JsonValueKind.True;
+            lock (gate)
+            {
+                accountDeletionAvailable = deleteAvailable;
+                connectStatus = "Connect API: " + db + (deleteAvailable ? " · Kontolöschung verfügbar" : " · Kontolöschung noch nicht verfügbar");
+            }
         }
         catch (OperationCanceledException) { }
         catch (Exception ex) { lock (gate) connectStatus = "Verbindungsfehler: " + ex.Message; }
@@ -751,6 +760,54 @@ public sealed partial class Plugin : IDalamudPlugin
         finally { lock (gate) connectBusy = false; }
     }
 
+    private async Task DeleteConnectAccountAsync(string password)
+    {
+        lock (gate)
+        {
+            if (connectBusy || !accountDeletionAvailable || !HasMatchingConnectCharacter()) return;
+            connectBusy = true;
+            connectStatus = "Konto wird auf dem Server gelöscht ...";
+        }
+        try
+        {
+            await ConnectRequestAsync("delete_account", HttpMethod.Post, new { password }, authenticate: true);
+            // Only clear the local account after the server confirmed the deletion.
+            lock (gate)
+            {
+                accessToken = null;
+                registeredUserId = 0;
+                registeredCharacter = "";
+                registeredWorld = "";
+                friendItems.Clear();
+                foundUsers.Clear();
+                chatItems.Clear();
+                worldUsers.Clear();
+                unreadMessages.Clear();
+                alertedMessageIds.Clear();
+                pendingChatNotices.Clear();
+                chatPartnerId = 0;
+                chatPartnerName = "";
+                chatDraft = "";
+                loginPassword = "";
+                registrationPassword = "";
+                currentPassword = "";
+                newPassword = "";
+                deleteAccountPassword = "";
+                accountDeletionAvailable = false;
+                chatHasMore = false;
+                connectStatus = "Connect-Konto wurde vom Server gelöscht. Neue Registrierung benötigt einen Einladungscode.";
+            }
+            config.EncryptedConnectToken = "";
+            pluginInterface.SavePluginConfig(config);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            lock (gate) connectStatus = "Kontolöschung fehlgeschlagen: " + ex.Message;
+        }
+        finally { lock (gate) connectBusy = false; }
+    }
+
     private async Task LoadConnectProfileAsync()
     {
         lock (gate) { if (connectBusy) return; connectBusy = true; connectStatus = "Lade Profil ..."; }
@@ -805,6 +862,8 @@ public sealed partial class Plugin : IDalamudPlugin
                 registrationPassword = "";
                 newPassword = "";
                 currentPassword = "";
+                deleteAccountPassword = "";
+                chatHasMore = false;
                 directorySettingsLoaded = false;
                 connectBusy = false;
             }
@@ -914,7 +973,14 @@ public sealed partial class Plugin : IDalamudPlugin
                 }
                 else if (action.StartsWith("messages&", StringComparison.Ordinal) || action == "messages")
                 {
-                    chatItems = JsonSerializer.Deserialize<List<ChatItem>>(doc.RootElement.GetProperty("messages").GetRawText(), SocialJson) ?? [];
+                    var received = JsonSerializer.Deserialize<List<ChatItem>>(doc.RootElement.GetProperty("messages").GetRawText(), SocialJson) ?? [];
+                    bool olderPage = action.Contains("&beforeId=", StringComparison.Ordinal);
+                    if (olderPage)
+                        chatItems = received.Concat(chatItems).DistinctBy(m => m.Id).OrderBy(m => m.Id).ToList();
+                    else
+                        chatItems = received;
+                    chatHasMore = doc.RootElement.TryGetProperty("hasMore", out var more)
+                        && more.ValueKind == JsonValueKind.True;
                     socialStatus = $"{chatItems.Count} Nachrichten geladen.";
                 }
                 else
@@ -1405,6 +1471,7 @@ public sealed partial class Plugin : IDalamudPlugin
                     chatPartnerId = item.OtherUserId;
                     chatPartnerName = item.CharacterName + "@" + item.HomeWorld;
                     chatItems = [];
+                    chatHasMore = false;
                     _ = SocialOperationAsync("messages&userId=" + chatPartnerId, HttpMethod.Get);
                 }
                 ImGui.SameLine();
@@ -1461,9 +1528,18 @@ public sealed partial class Plugin : IDalamudPlugin
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.TextColored(new Vector4(1f, .49f, .49f, 1f), "KONTO DAUERHAFT LÖSCHEN");
-        ImGui.TextWrapped("Die vollständige Kontolöschung wird erst angeboten, wenn der Server dafür einen abgesicherten Endpunkt bereitstellt.");
-        ImGui.TextDisabled("Dazu gehören Sitzungen, Freunde, Nachrichten, Kontakte und Termine.");
-        ImGui.TextDisabled("Eine lokale Abmeldung löscht keine Serverdaten.");
+        ImGui.TextWrapped("Achtung: Konto, Token, Nachrichten, Kontakte und Terminbezüge werden dauerhaft entfernt. Für die Löschung ist genau eine Passworteingabe erforderlich, kein weiterer Bestätigungsdialog.");
+        if (ImGui.Button("Serverfunktion prüfen") && !busy) _ = ConnectHealthAsync();
+        if (accountDeletionAvailable)
+        {
+            ImGui.InputText("Aktuelles Connect-Passwort##deleteaccount", ref deleteAccountPassword, 128, ImGuiInputTextFlags.Password);
+            if (!busy && deleteAccountPassword.Length > 0 && ImGui.Button("KONTO UNWIDERRUFLICH LÖSCHEN"))
+                _ = DeleteConnectAccountAsync(deleteAccountPassword);
+        }
+        else
+        {
+            ImGui.TextDisabled("Kontolöschung serverseitig nicht bestätigt; die Schaltfläche bleibt gesperrt.");
+        }
     }
 
     private void DrawConversationPicker()
@@ -1481,7 +1557,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 {
                     chatPartnerId = friend.OtherUserId;
                     chatPartnerName = caption;
-                    lock (gate) chatItems = [];
+                    lock (gate) { chatItems = []; chatHasMore = false; }
                     _ = SocialOperationAsync("messages&userId=" + chatPartnerId, HttpMethod.Get);
                 }
             }
@@ -1520,6 +1596,12 @@ public sealed partial class Plugin : IDalamudPlugin
                 }
         }
         ImGui.EndChild();
+        if (chatHasMore && !busy && chats.Count > 0)
+        {
+            long oldest = chats.Min(item => item.Id);
+            if (ImGui.SmallButton("Ältere Nachrichten laden"))
+                _ = SocialOperationAsync("messages&userId=" + chatPartnerId + "&beforeId=" + oldest, HttpMethod.Get);
+        }
         DrawChatTranslations(chats);
         ImGui.SetNextItemWidth(-95);
         ImGui.InputText("##message", ref chatDraft, 1500);
