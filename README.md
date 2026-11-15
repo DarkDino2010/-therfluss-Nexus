@@ -1,5 +1,8 @@
 # Aetherfluss Nexus — Dalamud Custom Repository
 
+> **Aktueller Stand (15.11.2026):** Die veröffentlichte Beta ist **0.12.4**. Der Entwicklungsbranch `main` enthält **0.12.5.0** mit den neuen Connect-Tabs, besserem Nachrichtenverlauf und separater Kontoverwaltung. Der [Windows-CI-Build für 0.12.5](https://github.com/DarkDino2010/-therfluss-Nexus/actions/runs/43734258680) war erfolgreich und enthält das Test-Artefakt `Aetherfluss-Nexus-v0.12.5-CI`. **Kontolöschung und Passwort-Wiederherstellung auf dem Produktivserver sind noch nicht implementiert.**
+
+
 **Version:** 0.12.4.0 (Beta-Vorbereitung)  
 **Technischer Plugin-Name:** `AetherflussGuide` (absichtlich unverändert, um Updates zu ermöglichen)  
 **Sichtbarer Name:** `Aetherfluss Nexus`
