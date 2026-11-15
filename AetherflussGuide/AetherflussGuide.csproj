@@ -1,7 +1,7 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
-    <Version>0.12.4.0</Version>
+    <Version>0.12.5.0</Version>
     <Author>Der Ätherfluss</Author>
     <Name>Aetherfluss Nexus</Name>
     <Punchline>FFXIV-Guides, weltübergreifende Kontakte, Messenger und Raid-Termine.</Punchline>
