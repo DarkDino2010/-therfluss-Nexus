@@ -1364,8 +1364,8 @@ public sealed partial class Plugin : IDalamudPlugin
                 if (ImGui.Selectable(name + "##friendauto")) friendSearch = name;
             }
         }
-        string message; List<FriendItem> friends; List<UserItem> users; List<ChatItem> chats; bool busy;
-        lock (gate) { message = socialStatus; friends = [.. friendItems]; users = [.. foundUsers]; chats = [.. chatItems]; busy = socialBusy; }
+        string message; List<FriendItem> friends; List<UserItem> users; bool busy;
+        lock (gate) { message = socialStatus; friends = [.. friendItems]; users = [.. foundUsers]; busy = socialBusy; }
         ImGui.TextWrapped(message);
         if (ImGui.CollapsingHeader("Spielersuche"))
         {
@@ -1428,6 +1428,9 @@ public sealed partial class Plugin : IDalamudPlugin
     // The chat pane is isolated so an empty selection cannot leave the tab stack unbalanced.
     private void DrawConnectChat()
     {
+        List<ChatItem> chats;
+        bool busy;
+        lock (gate) { chats = [.. chatItems]; busy = socialBusy; }
         if (chatPartnerId <= 0)
         {
             ImGui.Spacing();
