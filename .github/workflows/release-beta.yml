@@ -1,0 +1,60 @@
+name: Publish Aetherfluss Nexus beta
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (must be new, e.g. v0.12.4-beta)'
+        required: true
+        default: 'v0.12.4-beta'
+permissions:
+  contents: write
+concurrency:
+  group: plugin-release
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Verify tag not used
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          gh release view $env:RELEASE_TAG 2>$null
+          if ($LASTEXITCODE -eq 0) { throw "Release already exists: $env:RELEASE_TAG" }
+          if ($env:RELEASE_TAG -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$') { throw 'Invalid tag' }
+      - name: Build release
+        shell: pwsh
+        run: dotnet build AetherflussGuide/AetherflussGuide.csproj --configuration Release -p:Platform=x64 --nologo
+      - name: Prepare package + feed
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          $xml = [xml](Get-Content AetherflussGuide/AetherflussGuide.csproj -Raw)
+          $version = $xml.Project.PropertyGroup.Version.ToString()
+          python scripts/prepare_release.py --repo $env:REPOSITORY --tag $env:RELEASE_TAG --version $version
+      - name: Publish GitHub prerelease
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          gh release create $env:RELEASE_TAG Release-Output/latest.zip --title "Aetherfluss Nexus $env:RELEASE_TAG" --notes "Private-circle beta testing. Install via custom Dalamud repository feed." --prerelease --target main
+      - name: Update feed on main
+        shell: pwsh
+        run: |
+          Copy-Item Release-Output/repo.json repo.json -Force
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add repo.json
+          git commit -m 'chore: update Dalamud plugin feed'
+          git push origin HEAD:main

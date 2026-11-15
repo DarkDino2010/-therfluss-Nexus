@@ -1,0 +1,16 @@
+**/bin/
+**/obj/
+.vs/
+.idea/
+*.user
+*.suo
+Installieren/
+Release-Output/
+*.pfx
+*.key
+.env
+.env.*
+appsettings.*.json
+server/
+sql/
+*.log
