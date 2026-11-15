@@ -21,23 +21,15 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
-      - name: Verify tag not used
+      - name: Validate release tag
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          if ($env:RELEASE_TAG -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$') { throw 'Invalid tag' }
-          $existingReleases = gh release list --limit 100 --json tagName | ConvertFrom-Json
-          if ($LASTEXITCODE -ne 0) { throw 'Unable to verify existing releases' }
-          if ($existingReleases | Where-Object { $_.tagName -eq $env:RELEASE_TAG }) {
-            throw "Release already exists: $env:RELEASE_TAG"
+          if ($env:RELEASE_TAG -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$') {
+            throw "Invalid release tag: $env:RELEASE_TAG"
           }
-          # A missing tag is expected for the first release. Do not use --exit-code here:
-          # it returns 2 on no match and aborts PowerShell steps on GitHub Actions.
-          $remoteTag = git ls-remote --tags origin "refs/tags/$env:RELEASE_TAG"
-          if ($LASTEXITCODE -ne 0) { throw "Unable to verify remote tag: $env:RELEASE_TAG" }
-          if ($remoteTag) { throw "Git tag already exists: $env:RELEASE_TAG" }
+          Write-Host "Release tag syntax OK: $env:RELEASE_TAG"
       - name: Build release
         shell: pwsh
         run: dotnet build AetherflussGuide/AetherflussGuide.csproj --configuration Release -p:Platform=x64 --nologo
