@@ -8,12 +8,12 @@ Dieses Repository enthält ausschließlich den **Dalamud-Client**. Server-PHP, D
 
 ## Veröffentlichung (GitHub)
 
-1. Auf GitHub ein leeres öffentliches Repository `Aetherfluss-Nexus` anlegen (ohne README/Vorlagen).
-2. Den **Inhalt dieses Ordners** in das neue Repository auf Branch `main` hochladen.
+1. Das bestehende öffentliche GitHub-Repository [`DarkDino2010/-therfluss-Nexus`](https://github.com/DarkDino2010/-therfluss-Nexus) verwenden.
+2. Die Projektdateien befinden sich bereits auf `main`; neue Änderungen gezielt committen.
 3. In GitHub unter **Settings → Actions → General → Workflow permissions** `Read and write permissions` für `GITHUB_TOKEN` aktivieren, sofern noch deaktiviert.
 4. Unter **Actions → Publish Aetherfluss Nexus beta → Run workflow** den neuen Tag `v0.12.4-beta` starten.
 5. Erst wenn die Action erfolgreich ist, liegt in `repo.json` ein echter Eintrag vor. Der Workflow erzeugt `latest.zip` und ein GitHub-Prerelease.
-6. Repository-URL an die Testerin geben: `https://raw.githubusercontent.com/OWNER/Aetherfluss-Nexus/main/repo.json` (`OWNER` ersetzen).
+6. Repository-URL an die Testerin geben: `https://raw.githubusercontent.com/DarkDino2010/-therfluss-Nexus/main/repo.json` (`OWNER` ersetzen).
 7. In XIVLauncher/Dalamud `/xlsettings` → Experimental → Custom Plugin Repositories die URL hinzufügen, danach `/xlplugins` → Aetherfluss Nexus.
 
 **Hinweis:** `repo.json` startet absichtlich mit `[]`. Das verhindert die Veröffentlichung eines kaputten Links, bevor GitHub Actions einen Build erzeugt. Kein Release gilt als erfolgreich, bevor sowohl die Action als auch eine Dalamud-Testinstallation bestanden sind.
