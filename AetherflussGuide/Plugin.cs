@@ -1270,6 +1270,7 @@ public sealed partial class Plugin : IDalamudPlugin
         if (!ImGui.BeginTabBar("##connect-workspace")) return;
         if (ImGui.BeginTabItem("Nachrichten"))
         {
+            DrawConversationPicker();
         ImGui.TextWrapped("/pn Vorname Nachname@Welt Nachricht – auch während Instanzen, weltübergreifend.");
         if (!string.IsNullOrEmpty(pnStatus)) ImGui.TextWrapped(pnStatus);
         if (ImGui.SmallButton("Neue PN (/pn)"))
@@ -1423,6 +1424,31 @@ public sealed partial class Plugin : IDalamudPlugin
             ImGui.EndTabItem();
         }
         ImGui.EndTabBar();
+    }
+
+    private void DrawConversationPicker()
+    {
+        List<FriendItem> contacts;
+        lock (gate) contacts = [.. friendItems.Where(f => f.Status == "accepted")];
+        var label = chatPartnerId > 0 ? chatPartnerName : "Gespräch auswählen";
+        ImGui.SetNextItemWidth(-1);
+        if (ImGui.BeginCombo("##connect-conversation-picker", label))
+        {
+            foreach (var friend in contacts)
+            {
+                var caption = friend.CharacterName + "@" + friend.HomeWorld;
+                if (ImGui.Selectable(caption + "##conversation" + friend.OtherUserId, friend.OtherUserId == chatPartnerId))
+                {
+                    chatPartnerId = friend.OtherUserId;
+                    chatPartnerName = caption;
+                    lock (gate) chatItems = [];
+                    _ = SocialOperationAsync("messages&userId=" + chatPartnerId, HttpMethod.Get);
+                }
+            }
+            ImGui.EndCombo();
+        }
+        if (contacts.Count == 0)
+            ImGui.TextDisabled("Noch keine bestätigten Connect-Freunde vorhanden.");
     }
 
     // The chat pane is isolated so an empty selection cannot leave the tab stack unbalanced.
